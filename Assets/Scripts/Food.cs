@@ -16,5 +16,4 @@ public class Food : MonoBehaviour
         int y = random.Next(0, 10);
         food.transform.position = new Vector2((float)x, (float)y);
     }
-
 }

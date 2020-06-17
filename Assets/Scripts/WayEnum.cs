@@ -1,7 +1,4 @@
-﻿using System;
-
-
-enum WayEnum
+﻿public enum WayEnum
 {
     Up = 0,
     Down = 1,

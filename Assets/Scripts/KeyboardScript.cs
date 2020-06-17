@@ -4,53 +4,103 @@ using UnityEngine;
 
 public class KeyboardScript : MonoBehaviour
 {
-    private BoxCollider2D cube;
-    public float Speed = 0.5f;
+    public int SnakeLenght;
+    private Coordinate2d[] _snakeCoordinate;
+    private GameObject[] _snake;
+    public float Speed;
     public float RangeSpeed = 1.0f;
     private WayEnum _way;
-
+    public GameObject cube;
+    
     void Start()
     {
+        _snakeCoordinate = new Coordinate2d[SnakeLenght];
+        _snake = new GameObject[SnakeLenght];
         _way = GetRandomWay();
-        cube = GetComponent<BoxCollider2D>();
-        StartCoroutine(Move());
+        _snake[0] = Instantiate(cube, new Vector2(0, 0), Quaternion.identity);
+        _snakeCoordinate[0] = new Coordinate2d { CoordinateX = _snake[0].transform.position.x, CoordinateY = _snake[0].transform.position.y };
+        StartCoroutine(UpdateSnakeCoordinate());
     }
 
     void Update()
     {
+        if (_snake[0].GetComponent<ForCube>().Triggered)
+        {
+            if (_snake[_snake.Length - 1] == null)
+            {
+                for (var i = 0; i < _snake.Length; i++)
+                {
+                    if (_snake[i] == null)
+                    {
+                        _snakeCoordinate[i] = new Coordinate2d { CoordinateX = _snakeCoordinate[i - 1].CoordinateX, CoordinateY = _snakeCoordinate[i - 1].CoordinateY };
+                        var duplicate = Instantiate(cube, new Vector2(_snakeCoordinate[i].CoordinateX, _snakeCoordinate[i].CoordinateY), Quaternion.identity);
+                        _snake[i] = duplicate;
+                        _snake[0].GetComponent<ForCube>().Triggered = false;
+                        break;
+                    }
+                }
+            }
+        }
         ListenKey();
     }
 
-    private IEnumerator Move()
+    private IEnumerator UpdateSnakeCoordinate()
     {
         while (true)
         {
-            switch (_way)
+            Move(_way);
+            for (var i = 0; i < _snake.Length; i++)
             {
-                case WayEnum.Up:
-                    {
-                        cube.transform.position = new Vector2(cube.transform.position.x, cube.transform.position.y + RangeSpeed);
-                        break;
-                    }
-                case WayEnum.Down:
-                    {
-                        cube.transform.position = new Vector2(cube.transform.position.x, cube.transform.position.y - RangeSpeed);
-                        break;
-                    }
-                case WayEnum.Left:
-                    {
-                        cube.transform.position = new Vector2(cube.transform.position.x - RangeSpeed, cube.transform.position.y);
-                        break;
-                    }
-                case WayEnum.Right:
-                    {
-                        cube.transform.position = new Vector2(cube.transform.position.x + RangeSpeed, cube.transform.position.y);
-                        break;
-                    }
+                if (_snake[i] != null)
+                {
+                    _snake[i].transform.position = new Vector2(_snakeCoordinate[i].CoordinateX, _snakeCoordinate[i].CoordinateY);
+                }
             }
             yield return new WaitForSeconds(Speed);
         }
-        
+
+    }
+
+    private void Move(WayEnum way)
+    {
+        var oldX = _snakeCoordinate[0].CoordinateX;
+        var oldY = _snakeCoordinate[0].CoordinateY;
+        switch (way)
+        {
+            case WayEnum.Up:
+                {
+                    _snakeCoordinate[0].CoordinateY += RangeSpeed;
+                    break;
+                }
+            case WayEnum.Down:
+                {
+                    _snakeCoordinate[0].CoordinateY -= RangeSpeed;
+                    break;
+                }
+            case WayEnum.Right:
+                {
+                    _snakeCoordinate[0].CoordinateX += RangeSpeed;
+                    break;
+                }
+            case WayEnum.Left:
+                {
+                    _snakeCoordinate[0].CoordinateX -= RangeSpeed;
+                    break;
+                }
+        }
+        for (var i = 1; i < _snake.Length; i++)
+        {
+            if (_snake[i] == null)
+            {
+                return;
+            }
+            var thisX = _snakeCoordinate[i].CoordinateX;
+            var thisY = _snakeCoordinate[i].CoordinateY;
+            _snakeCoordinate[i].CoordinateX = oldX;
+            _snakeCoordinate[i].CoordinateY = oldY;
+            oldX = thisX;
+            oldY = thisY;
+        }
     }
 
     private void ListenKey()
